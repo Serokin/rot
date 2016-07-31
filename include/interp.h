@@ -295,6 +295,8 @@ DECLARE_DO_FUN(	do_sell		);
 DECLARE_DO_FUN( do_set		);
 DECLARE_DO_FUN(	do_shout	);
 DECLARE_DO_FUN( do_show		);
+DECLARE_DO_FUN( do_showclass);
+DECLARE_DO_FUN( do_showskill);
 DECLARE_DO_FUN(	do_shutdow	);
 DECLARE_DO_FUN(	do_shutdown	);
 DECLARE_DO_FUN(	do_sign		);

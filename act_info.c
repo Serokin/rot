@@ -3547,8 +3547,6 @@ void do_wimpy( CHAR_DATA *ch, char *argument )
     return;
 }
 
-
-
 void do_password( CHAR_DATA *ch, char *argument )
 {
     char arg1[MAX_INPUT_LENGTH];
@@ -3642,4 +3640,112 @@ void do_password( CHAR_DATA *ch, char *argument )
     save_char_obj( ch );
     send_to_char( "Ok.\n\r", ch );
     return;
+}
+
+/**
+ * Search for what skills or spells are available on classes.
+ * @param CHAR_DATA *ch
+ * @param char *argument
+ */
+void do_showskill( CHAR_DATA *ch, char *argument )
+{
+	int sn;
+	int class;
+	int col = 0;
+	char buf[MAX_STRING_LENGTH];
+
+	if ( argument[0] == '\0' )
+	{
+		send_to_char("Syntax: showskill <skill name>\n\r", ch);
+		return;
+	}
+
+	sn = skill_lookup( argument );
+
+	if ( sn < 0 )                                 /* no skill by that name */
+	{
+		send_to_char("No skill or spell by that name exists.\n\r", ch);
+		return;
+	}
+
+	sprintf(buf, "Classes and levels for %s:\n\r", skill_table[sn].name);
+	send_to_char(buf, ch);
+
+	for ( class = 0; class < MAX_CLASS; class++)
+	{
+		if ( skill_table[sn].skill_level[class] < 102 && skill_table[sn].skill_level[class] > 0  )
+		{
+			sprintf(buf, "{C%-12s{x: {c%-4d{x", class_table[class].name,
+			        skill_table[sn].skill_level[class]);
+			send_to_char(buf, ch);
+			col++;
+			if ( col == 3 )
+			{
+				send_to_char("\n\r", ch);
+				col = 0;
+			}
+			continue;
+		}
+	}
+
+	send_to_char("\n\r", ch);
+
+	return;
+}
+
+/**
+ * Displays what skills and spells a class has available.
+ * @param CHAR_DATA *ch
+ * @param char *argument
+ */
+void do_showclass( CHAR_DATA *ch, char *argument )
+{
+	int sn;
+	int class;
+	int col = 0;
+	int lev = 0;
+	int skill_lev;
+	char buf[MAX_STRING_LENGTH];
+
+	if ( argument[0] == '\0' )
+	{
+		send_to_char("Syntax: showclass <class name>\n\r", ch);
+		return;
+	}
+
+	class = class_lookup( argument );
+
+	if ( class < 0)                                 /* no class by that name */
+	{
+		send_to_char("No class by that name exists.\n\r", ch);
+		return;
+	}
+
+	sprintf(buf, "Spells/Skills for %s:\n\r", class_table[class].name);
+	send_to_char(buf, ch);
+
+	for ( lev = 1; lev < LEVEL_IMMORTAL; lev++)
+	{
+		for ( sn = 0; sn < MAX_SKILL; sn++)
+		{
+			skill_lev = skill_table[sn].skill_level[class];
+
+			if ( skill_lev == lev )
+			{
+				sprintf(buf, "{CLevel %-4d{x: {c%-18s{x", lev, skill_table[sn].name);
+				send_to_char(buf, ch);
+				col++;
+				if ( col == 2 )
+				{
+					send_to_char("\n\r", ch);
+					col = 0;
+				}
+				continue;
+			}
+		}
+	}
+
+	send_to_char("\n\r", ch);
+
+	return;
 }
