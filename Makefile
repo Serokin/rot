@@ -1,5 +1,5 @@
 CC      = ccache gcc
-PROF    = -O -g
+PROF    = -O -g -fno-builtin
 C_FLAGS =  $(PROF) -I$(INCLUDE)  -DROT
 L_FLAGS =  $(PROF) -lcrypt
 
