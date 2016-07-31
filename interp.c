@@ -887,32 +887,28 @@ void do_wizhelp( CHAR_DATA *ch, char *argument )
     char buf[MAX_STRING_LENGTH];
     int cmd;
     int col;
- 
+    int clevel;
     col = 0;
-    if ( ( ch->class < MAX_CLASS/2 )
-    &&   ( get_trust( ch ) < LEVEL_HERO ) )
-    {
-	return;
-    }
-    for ( cmd = 0; cmd_table[cmd].name[0] != '\0'; cmd++ )
-    {
-        if ( (cmd_table[cmd].level >= LEVEL_HERO
-        &&   cmd_table[cmd].level <= get_trust( ch ) 
-        &&   cmd_table[cmd].show )
-	||   ( ( cmd_table[cmd].tier == 2 )
-	&&   ( cmd_table[cmd].level <= get_trust( ch ) )
-        &&   cmd_table[cmd].show ) )
 
-	{
-	    sprintf( buf, "%-12s", cmd_table[cmd].name );
-	    send_to_char( buf, ch );
-	    if ( ++col % 6 == 0 )
-		send_to_char( "\n\r", ch );
-	}
+    for( clevel = LEVEL_HERO + 1; clevel < MAX_LEVEL + 1; clevel++ )
+    {
+        for ( cmd = 0; cmd_table[cmd].name[0] != '\0'; cmd++ )
+        {
+            if ( cmd_table[cmd].level >  LEVEL_HERO
+            &&   cmd_table[cmd].level == clevel
+            &&   ( cmd_table[cmd].level <= get_trust( ch ) )
+            &&   cmd_table[cmd].show)
+            {
+                sprintf( buf, "{C[{D%-3d{C]{x {w%-13s{x", cmd_table[cmd].level, capitalize(cmd_table[cmd].name));
+                send_to_char( buf, ch );
+                if ( ++col % 4 == 0 )
+                    send_to_char( "\n\r", ch );
+            }
+        }
     }
- 
-    if ( col % 6 != 0 )
-	send_to_char( "\n\r", ch );
+
+    if ( col % 4 != 0 )
+        sprintf(buf, "\n\r{RCommands Found:{Y %d{x\n\r", col);
+        send_to_char( buf, ch );
     return;
 }
-
