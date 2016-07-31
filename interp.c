@@ -142,6 +142,8 @@ LOG_NORMAL, 1 },*/
     { "rules",		do_rules,	POS_DEAD,	 0,  1,  LOG_NORMAL, 1 },
     { "score",		do_score,	POS_DEAD,	 0,  1,  LOG_NORMAL, 1 },
     { "scan",		do_scan,	POS_RESTING,	 0,  1,  LOG_NORMAL, 1 },
+    { "showclass",  do_showclass,  POS_DEAD,    0,  1,  LOG_NORMAL, 1 },
+    { "showskill",  do_showskill,  POS_DEAD,    0,  1,  LOG_NORMAL, 1 },
     { "skills",		do_skills,	POS_DEAD,	 0,  1,  LOG_NORMAL, 1 },
     { "socials",	do_socials,	POS_DEAD,	 0,  1,  LOG_NORMAL, 1 },
     { "show",		do_show,	POS_DEAD,	 0,  1,  LOG_NORMAL, 1 },
