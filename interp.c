@@ -108,7 +108,6 @@ LOG_NORMAL, 1 },*/
     { "practice",       do_practice,	POS_SLEEPING,    0,  1,  LOG_NORMAL, 1 },
     { "rest",		do_rest,	POS_SLEEPING,	 0,  1,  LOG_NORMAL, 1 },
     { "sit",		do_sit,		POS_SLEEPING,    0,  1,  LOG_NORMAL, 1 },
-    { "sockets",        do_sockets,	POS_DEAD,       IM,  1,  LOG_NORMAL, 1 },
     { "stand",		do_stand,	POS_SLEEPING,	 0,  1,  LOG_NORMAL, 1 },
     { "tell",		do_tell,	POS_SLEEPING,	 0,  1,  LOG_NORMAL, 1 },
     { "unlock",         do_unlock,      POS_RESTING,     0,  1,  LOG_NORMAL, 1 },
@@ -350,7 +349,7 @@ LOG_NORMAL, 1 },*/
     { "set",		do_set,		POS_DEAD,	L2,  1,  LOG_NORMAL, 1 },
     { "shutdow",	do_shutdow,	POS_DEAD,	ML,  1,  LOG_NORMAL, 0 },
     { "shutdown",	do_shutdown,	POS_DEAD,	ML,  1,  LOG_ALWAYS, 1 },
-    { "sockets",	do_sockets,	POS_DEAD,	IM,  1,  LOG_NORMAL, 1 },
+    { "sockets",	do_sockets,	POS_DEAD,	ML,  1,  LOG_NORMAL, 1 },
     { "wedpost",	do_wedpost,	POS_DEAD,	ML,  1,  LOG_NORMAL, 1 },
     { "wizlock",	do_wizlock,	POS_DEAD,	L2,  1,  LOG_ALWAYS, 1 },
 
@@ -894,6 +893,24 @@ void do_wizhelp( CHAR_DATA *ch, char *argument )
     int clevel;
     col = 0;
 
+    if ((clevel = atoi(argument)) >= 102 && clevel <= 110)
+    {
+            for ( cmd = 0; cmd_table[cmd].name[0] != '\0'; cmd++ )
+            {
+                if ( cmd_table[cmd].level >  LEVEL_HERO
+                &&   cmd_table[cmd].level == clevel
+                &&   ( cmd_table[cmd].level <= get_trust( ch ) )
+                &&   cmd_table[cmd].show)
+                {
+                    sprintf( buf, "{C[{D%-3d{C]{x {w%-13s{x", cmd_table[cmd].level, capitalize(cmd_table[cmd].name));
+                    send_to_char( buf, ch );
+                    if ( ++col % 4 == 0 )
+                        send_to_char( "\n\r", ch );
+                }
+            }
+        return;  
+    }
+
     for( clevel = LEVEL_HERO + 1; clevel < MAX_LEVEL + 1; clevel++ )
     {
         for ( cmd = 0; cmd_table[cmd].name[0] != '\0'; cmd++ )
@@ -903,10 +920,20 @@ void do_wizhelp( CHAR_DATA *ch, char *argument )
             &&   ( cmd_table[cmd].level <= get_trust( ch ) )
             &&   cmd_table[cmd].show)
             {
-                sprintf( buf, "{C[{D%-3d{C]{x {w%-13s{x", cmd_table[cmd].level, capitalize(cmd_table[cmd].name));
-                send_to_char( buf, ch );
-                if ( ++col % 4 == 0 )
-                    send_to_char( "\n\r", ch );
+                if (strlen(argument) >= 1 && strstr(cmd_table[cmd].name, argument))
+                {
+                    sprintf( buf, "{C[{D%-3d{C]{x {w%-13s{x", cmd_table[cmd].level, capitalize(cmd_table[cmd].name));
+                    send_to_char( buf, ch );
+                    if ( ++col % 4 == 0 )
+                        send_to_char( "\n\r", ch );
+                }
+                else if (strlen(argument) == 0)
+                {
+                    sprintf( buf, "{C[{D%-3d{C]{x {w%-13s{x", cmd_table[cmd].level, capitalize(cmd_table[cmd].name));
+                    send_to_char( buf, ch );
+                    if ( ++col % 4 == 0 )
+                        send_to_char( "\n\r", ch );
+                }
             }
         }
     }
