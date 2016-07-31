@@ -41,10 +41,13 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdarg.h>
+#include <unistd.h>
 #include "merc.h"
 #include "recycle.h"
 #include "tables.h"
 #include "lookup.h"
+
 
 /* command procedures needed */
 DECLARE_DO_FUN(do_at		);
@@ -72,6 +75,283 @@ DECLARE_DO_FUN(do_disconnect	);
 DECLARE_DO_FUN(do_restore	);
 DECLARE_DO_FUN(do_allpeace	);
 
+void    do_copyover     args( (CHAR_DATA *ch, char *argument ) );
+int copyover_timer = -1;
+
+#define CH(descriptor)  ((descriptor)->original ? \
+(descriptor)->original : (descriptor)->character)
+
+/* This file holds the copyover data */
+#define COPYOVER_FILE "copyover.data"
+
+/* This is the executable file */
+#define EXE_FILE      "rot"
+
+/*  Copyove - Serra
+ *  Added this little piece of code in so if you aren't in
+ *  OLC and you type copy, it won't copyover anymore.
+ */
+
+void do_copyove( CHAR_DATA *ch, char *argument )
+{
+    send_to_char( "If you want to COPYOVER, spell it out.\n\r", ch );
+    return;
+}
+
+/* Copyover_toggle -
+ * Written by John Shields to count down globally before initial copyover.
+ */
+void do_copyover_toggle(CHAR_DATA *ch, char * argument)
+{
+    int countdown;
+    char arg[MAX_INPUT_LENGTH];
+    char buf[MAX_STRING_LENGTH];
+
+    one_argument(argument, arg);
+    
+    if (arg[0] == '\0')
+    {
+        send_to_char("Copyover in how many ticks?\n\r", ch);
+        return;
+    }
+
+    if (!str_cmp("now", arg))
+    {
+        do_copyover(ch,"");
+        countdown = -1;
+        
+        return;
+    }
+
+    if (!str_cmp("cancel", arg) || !str_cmp("stop", arg))
+    {
+        countdown = -1;
+        sprintf(buf, "Copyover cancelled by %s.\n\r", ch->name);
+        stac(buf);
+        
+        return;
+    }
+    
+    if (!is_number(arg))
+    {
+        send_to_char("Copyover in how many ticks?\n\r", ch);
+        return;
+    }
+
+    countdown = atoi(argument);
+
+    if (countdown == 0)
+    {
+        do_copyover(ch,"");
+        countdown = -1;
+        
+        return;
+    }
+    
+    if (countdown < 0)
+    {
+        send_to_char("The number of ticks before you copyover must be positive.\n\r", ch);
+        return;
+    }
+
+    if (countdown > 0)
+    {
+        copyover_timer = countdown;
+        sprintf(buf,"Copyover countdown initiated by %s. Copyover will initiate in %d ticks.\n\r", ch->name, countdown ); 
+        stac(buf);
+        
+        return;
+    }
+
+    copyover_timer = countdown;
+
+return;
+}
+
+/*  Copyover - Original idea: Fusion of MUD++
+ *  Adapted to Diku by Erwin S. Andreasen, <erwin@pip.dknet.dk>
+ *  http://pip.dknet.dk/~pip1773
+ *  Changed into a ROM patch after seeing the 100th request for it :)
+ */
+
+void do_copyover (CHAR_DATA *ch, char * argument)
+{
+    FILE *fp = NULL;
+    DESCRIPTOR_DATA *d, *d_next;
+    char buf [100], buf2[100], buf3[100];
+    extern int port,control,wwwcontrol; /* db.c */
+    extern bool merc_down, newlock, wizlock;
+    char copyover_message[MAX_STRING_LENGTH];
+
+    sprintf(buf,"Port: %d - Control %d\n\r", port, control);
+
+    Logf( "Copyover by %s", ch ? ch->name : "System" );
+
+    if (!(fp = fopen (COPYOVER_FILE, "w")))
+    {
+    if (ch)
+        send_to_char ("Copyover file not writeable, aborted.\n\r",ch);
+
+    else
+    {
+        merc_down = TRUE;
+        tell_all( "Problem with copyover, rebooting mud normally." );
+    }
+
+    log_string( "Could not write to copyover file" );
+    perror ("do_copyover:fopen");
+    fpReserve = fopen( NULL_FILE, "r" );
+    
+    return;
+    }
+
+    fprintf( fp, "%d %d\n", wizlock, newlock );
+
+    /* For each playing descriptor, save its state */
+    for (d = descriptor_list; d ; d = d_next)
+    {
+    CHAR_DATA * och = CH (d);
+    d_next = d->next; /* We delete from the list , so need to save this */
+
+    if (!d->character || d->connected > CON_PLAYING) /* drop those logging on */
+    {
+        write_to_descriptor (d->descriptor, "\n\rSorry, we are rebooting. Come back in a few minutes.\n\r", 0);
+        close_socket (d); /* throw'em out */
+    }
+    else
+    {
+        fprintf (fp, "%d %d %s %s\n", d->descriptor, och->timer, och->name, d->host);
+        save_char_obj (och);
+
+        /* Start copyover message code, Senthae. */
+
+        if (ch)
+        {
+            sprintf(copyover_message,"{7The {Cw{ci{Cl{cl{7 of %s {7be {Rd{ron{Re.{x\n\r", can_see(och, ch) ? ch->name : "An Immortal" );
+            write_to_buffer(d, copyover_message, 0);
+            write_to_buffer(d, "{WA {wblinding white light {Wenvelopes the {rR{Re{ya{Yl{rm{W...{x\n\r", 0);
+        }
+
+        if (!ch)
+        {
+            sprintf(copyover_message," *** COPYOVER by System - please remain seated!" );
+            write_to_descriptor (d->descriptor, copyover_message, 0);
+        }
+
+       /* End copyover message code, Senthae */
+    }
+    }
+
+    fprintf (fp, "-1\n");
+    fclose (fp);
+
+    /* Close reserve and other always-open files and release other resources */
+    fclose( fpReserve );
+
+    /* exec - descriptors are inherited */
+    sprintf (buf, "%d", port);
+    sprintf (buf2, "%d", control);
+    sprintf (buf3, "%d", wwwcontrol);
+
+    
+    /* Remove the current copy, then copy the one from the src dir to the current dir. */     
+    system( "rm -f rot ; cp -f ../src/rot rot" );
+    execl(EXE_FILE, "rot", "copyover", buf2, buf3, (char *) NULL);
+
+    /* Failed - sucessful exec will not return */
+    perror ("do_copyover: execl");
+
+    if (ch)
+    send_to_char ("Copyover FAILED!\n\r",ch);
+
+    /* Here you might want to reopen fpReserve */
+    fpReserve = fopen (NULL_FILE, "r");
+}
+
+/* Recover from a copyover - load players */
+void copyover_recover ()
+{
+    DESCRIPTOR_DATA *d;
+    FILE *fp;
+    char name [100];
+    char host[MAX_STRING_LENGTH];
+    int desc, timer, wiz, new;
+    extern bool wizlock, newlock;
+    bool fOld;
+    CHAR_DATA *ch;
+
+    if (!(fp = fopen (COPYOVER_FILE, "r"))) /* there are some descriptors open which will hang forever then ? */
+    {
+        perror ("copyover_recover:fopen");
+        exit (1);
+    }
+
+    unlink (COPYOVER_FILE); /* In case something crashes - doesn't prevent reading  */
+
+    fscanf( fp, "%d %d\n",  &wiz, &new );
+    wizlock = (bool)wiz;
+    newlock = (bool)new;
+
+    for (;;)
+    {
+        fscanf (fp, "%d %d %s %s\n", &desc, &timer, name, host);
+        if (desc == -1)
+            break;
+
+        /* Write something, and check if it goes error-free */      
+        if (!write_to_descriptor (desc, "",0))
+        {
+            close(desc); /* nope */
+            continue;
+        }
+
+        d = new_descriptor();
+        d->descriptor = desc;
+        d->host = str_dup (host);
+        d->next = descriptor_list;
+        descriptor_list = d;
+        d->connected = CON_COPYOVER_RECOVER; /* -15, so close_socket frees the char */
+
+        /* Now, find the pfile */
+        if (!(fOld = load_char_obj (d, name))) /* Player file not found?! */
+        {
+            write_to_descriptor (desc, "\n\rSomehow, your character was lost in the copyover. Sorry.\n\r", 0);
+            close_socket (d);           
+        }
+        else /* ok! */
+        {
+            d->character->timer = timer;
+            d->character->pcdata->socket = str_dup( d->host );
+
+            /* Insert in the char_list */
+            d->character->next  = char_list;
+            char_list           = d->character;
+
+            char_to_room (d->character, d->character->in_room);
+
+            if (!IS_NPC(d->character))
+            {
+                send_to_char("{WThe {rC{Rr{Ye{yatu{Yr{Re{rs {Wof the {rR{Re{Ya{yl{rm{W are {Cr{ce{Wbo{cr{Cn{W from the {Ddarkness{W from which they were spawned.{x\n\r", d->character);
+                do_look (d->character, "auto");
+            }
+
+
+            act ("$n fades into existence.", d->character, NULL, NULL, TO_ROOM);
+            d->connected = CON_PLAYING;
+
+            if (d->character->pet != NULL)
+            {
+                char_to_room(d->character->pet,d->character->in_room);
+                act("$n fades into existence.",d->character->pet,NULL,NULL,TO_ROOM);
+            }
+
+            ch = d->character;
+        }
+    }
+
+    fclose (fp);
+    fpReserve = fopen (NULL_FILE, "r");
+}
 
 /*
  * Local functions.

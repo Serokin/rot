@@ -211,15 +211,25 @@ DESCRIPTOR_DATA *new_descriptor(void)
     DESCRIPTOR_DATA *d;
 
     if (descriptor_free == NULL)
-	d = alloc_perm(sizeof(*d));
+    d = alloc_perm(sizeof(*d));
     else
     {
-	d = descriptor_free;
-	descriptor_free = descriptor_free->next;
+    d = descriptor_free;
+    descriptor_free = descriptor_free->next;
     }
-	
+    
     *d = d_zero;
     VALIDATE(d);
+    
+    d->connected    = CON_GET_NAME;
+    d->showstr_head = NULL;
+    d->showstr_point    = NULL;
+    d->outsize      = 2000;
+    d->pEdit        = NULL;         /* OLC */
+    d->pString      = NULL;         /* OLC */
+    d->editor       = 0;            /* OLC */
+    d->outbuf       = alloc_mem( d->outsize );
+    
     return d;
 }
 

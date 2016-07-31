@@ -61,6 +61,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <time.h>
 
 #include "merc.h"
@@ -259,8 +260,8 @@ int	write		args( ( int fd, char *buf, int nbyte ) );
 
 /* This includes Solaris Sys V as well */
 #if defined(sun)
-int	accept		args( ( int s, struct sockaddr *addr, int *addrlen ) );
-int	bind		args( ( int s, struct sockaddr *name, int namelen ) );
+//int	accept		args( ( int s, struct sockaddr *addr, int *addrlen ) );
+//int	bind		args( ( int s, struct sockaddr *name, int namelen ) );
 void	bzero		args( ( char *b, int length ) );
 int	close		args( ( int fd ) );
 int	getpeername	args( ( int s, struct sockaddr *name, int *namelen ) );
@@ -282,8 +283,8 @@ int	write		args( ( int fd, char *buf, int nbyte ) );
 #endif
 
 #if defined(ultrix)
-int	accept		args( ( int s, struct sockaddr *addr, int *addrlen ) );
-int	bind		args( ( int s, struct sockaddr *name, int namelen ) );
+//int	accept		args( ( int s, struct sockaddr *addr, int *addrlen ) );
+//int	bind		args( ( int s, struct sockaddr *name, int namelen ) );
 void	bzero		args( ( char *b, int length ) );
 int	close		args( ( int fd ) );
 int	getpeername	args( ( int s, struct sockaddr *name, int *namelen ) );
@@ -354,17 +355,16 @@ void	read_from_buffer	args( ( DESCRIPTOR_DATA *d ) );
 void	stop_idling		args( ( CHAR_DATA *ch ) );
 void    bust_a_prompt           args( ( CHAR_DATA *ch ) );
 
+int port;
+int control;
+int wwwport;
+int wwwcontrol;
 
 int main( int argc, char **argv )
 {
     struct timeval now_time;
-    int port;
-    int wwwport;
 
-#if defined(unix)
-    int control;
-    int wwwcontrol;
-#endif
+    bool fCopyOver = FALSE;
 
     /*
      * Memory debugging if needed.
@@ -404,49 +404,36 @@ int main( int argc, char **argv )
      */
     port = 4000;
     wwwport = 4001;
-    if ( argc > 1 )
+    if (argv[1] && argv[1][0])
     {
-	if ( !is_number( argv[1] ) )
-	{
-	    fprintf( stderr, "Usage: %s [port #] [wwwport #]\n", argv[0] );
-	    exit( 1 );
-	}
-	else if ( ( port = atoi( argv[1] ) ) <= 1024 )
-	{
-	    fprintf( stderr, "Port numbers must be above 1024.\n" );
-	    exit( 1 );
-	}
+            fCopyOver = TRUE;
+            control   = atoi(argv[2]); 
+            wwwcontrol = atoi(argv[3]);
     }
-    if ( argc > 2 )
-    {
-	if ( !is_number( argv[2] ) )
-	{
-	    fprintf( stderr, "Usage: %s [port #] [wwwport #]\n", argv[0] );
-	    exit( 1 );
-	}
-	else if ( ( wwwport = atoi( argv[2] ) ) <= 1024 )
-	{
-	    fprintf( stderr, "Port numbers must be above 1024.\n" );
-	    exit( 1 );
-	}
-    }
+    else                              
+            fCopyOver = FALSE;
 
     /*
      * Run the game.
      */
 #if defined(macintosh) || defined(MSDOS)
-    boot_db( );
+    boot_db();
     log_string( "Merc is ready to rock." );
     game_loop_mac_msdos( );
 #endif
 
 #if defined(unix)
-    control = init_socket( port );
-    wwwcontrol = init_socket( wwwport );
-    boot_db( );
-    sprintf( log_buf, "RoD is ready to rock on ports %d and %d.", port, wwwport );
+    if (!fCopyOver)
+    {
+        control = init_socket(port);
+        wwwcontrol = init_socket( wwwport );
+    }
+    boot_db( fCopyOver );
+    sprintf( log_buf, "Rot is ready to rock on ports %d and %d.", port, wwwport );
     log_string( log_buf );
+
     game_loop_unix( control, wwwcontrol );
+
     close (wwwcontrol);
     close (control);
 #endif
@@ -1188,14 +1175,8 @@ void init_descriptor_www( int wwwcontrol )
     /*
      * Cons a new descriptor.
      */
-    dnew = new_descriptor();
-
-    dnew->descriptor	= desc;
-    dnew->connected	= CON_GET_NAME;
-    dnew->showstr_head	= NULL;
-    dnew->showstr_point = NULL;
-    dnew->outsize	= 2000;
-    dnew->outbuf	= alloc_mem( dnew->outsize );
+    dnew = new_descriptor(); /* new_descriptor now also allocates things */
+    dnew->descriptor = desc;
 
     size = sizeof(sock);
     if ( getpeername( desc, (struct sockaddr *) &sock, &size ) < 0 )
@@ -2885,7 +2866,19 @@ void stop_idling( CHAR_DATA *ch )
     return;
 }
 
-
+/*
+ * Write to all characters
+ */
+void send_to_all_char( const char *text )
+{
+    DESCRIPTOR_DATA *d;
+    if ( !text )
+        return;
+    for ( d = descriptor_list; d; d = d->next )
+        if ( d->connected == CON_PLAYING && !IS_NPC(d->character))         
+            send_to_char( text, d->character );
+    return;
+}
 
 /*
  * Write to one char.
@@ -3797,3 +3790,36 @@ int gettimeofday( struct timeval *tp, void *tzp )
     tp->tv_usec = 0;
 }
 #endif
+
+void Logf (char * fmt, ...)
+{
+    char buf [MAX_STRING_LENGTH];
+    va_list args;
+    va_start (args, fmt);
+    vsprintf (buf, fmt, args);
+    va_end (args);  
+    log_string (buf);
+}
+
+void tell_all( int sig )
+{
+    DESCRIPTOR_DATA *d;
+    char buf[MAX_STRING_LENGTH];
+
+    signal(sig, SIG_DFL );
+    for ( d = descriptor_list; d; d = d->next )
+    {
+      buf[0] = '\0';
+      if (d->character)
+      {
+        write_to_descriptor(d->descriptor, "=+=+=+=+=+ ROT IS CRASHING !!! +=+=+=+=+=\n\r", 0);
+        do_copyover ( NULL, "" );
+        sprintf(buf, "Connected: %d Name: %s Switched: %s",
+            d->connected, d->original ? d->original->name : d->character->name,
+            d->original ? "Yes" : "No");
+      }
+        log_string(buf);
+    }
+
+    log_string("Rot Crashed");
+}

@@ -168,7 +168,7 @@ sh_int  		gsn_track;
 sh_int  		gsn_gouge;
 sh_int  		gsn_grip;
 
-
+extern int port,control;
 
 /*
  * Locals.
@@ -264,7 +264,7 @@ void	reset_area	args( ( AREA_DATA * pArea ) );
 /*
  * Big mama top level function.
  */
-void boot_db( void )
+void boot_db(bool fCopyOver)
 {
     ROOM_INDEX_DATA *pRoomIndex;
     /*
@@ -479,6 +479,11 @@ void boot_db( void )
 	ed->description		= str_dup( boot_buf );
 	ed->next		= pRoomIndex->extra_descr;
 	pRoomIndex->extra_descr	= ed;
+    }
+    
+    if (fCopyOver)
+    {
+    	copyover_recover();
     }
     return;
 }

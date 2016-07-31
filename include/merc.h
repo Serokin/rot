@@ -178,6 +178,10 @@ typedef void SPELL_FUN	args( ( int sn, int level, CHAR_DATA *ch, void *vo,
 #define MAX_INPUT_LENGTH	  256
 #define PAGELEN			   22
 
+#define MSL     MAX_STRING_LENGTH
+#define MIL     MAX_INPUT_LENGTH
+#define stac    send_to_all_char
+#define stc     send_to_char
 
 
 /*
@@ -331,6 +335,7 @@ struct	weather_data
 #define CON_READ_IMOTD			13
 #define CON_READ_MOTD			14
 #define CON_BREAK_CONNECT		15
+#define CON_COPYOVER_RECOVER    16
 
 
 
@@ -2494,7 +2499,7 @@ void	page_to_char_bw	args( ( const char *txt, CHAR_DATA *ch ) );
 
 /* db.c */
 char *	print_flags	args( ( int flag ));
-void	boot_db		args( ( void ) );
+void	boot_db		args( ( bool fCopyOver ) );
 void	area_update	args( ( void ) );
 CD *	create_mobile	args( ( MOB_INDEX_DATA *pMobIndex ) );
 void	clone_mobile	args( ( CHAR_DATA *parent, CHAR_DATA *clone) );

@@ -327,6 +327,8 @@ LOG_NORMAL, 1 },*/
      * Immortal commands.
      */
     { "advance",	do_advance,	POS_DEAD,	ML,  1,  LOG_ALWAYS, 1 },
+    { "copyover",   do_copyover_toggle,  POS_DEAD,   ML,  1,  LOG_ALWAYS, 1 },
+    { "trust",      do_trust,   POS_DEAD,   ML,  1,  LOG_ALWAYS, 1 },
     { "dump",		do_dump,	POS_DEAD,	ML,  1,  LOG_ALWAYS, 0 },
     { "trust",		do_trust,	POS_DEAD,	ML,  1,  LOG_ALWAYS, 1 },
     { "violate",	do_violate,	POS_DEAD,	ML,  1,  LOG_ALWAYS, 1 },
@@ -346,7 +348,7 @@ LOG_NORMAL, 1 },*/
     { "set",		do_set,		POS_DEAD,	L2,  1,  LOG_NORMAL, 1 },
     { "shutdow",	do_shutdow,	POS_DEAD,	ML,  1,  LOG_NORMAL, 0 },
     { "shutdown",	do_shutdown,	POS_DEAD,	ML,  1,  LOG_ALWAYS, 1 },
-/*  { "sockets",	do_sockets,	POS_DEAD,	IM,  1,  LOG_NORMAL, 1 }, */
+    { "sockets",	do_sockets,	POS_DEAD,	IM,  1,  LOG_NORMAL, 1 },
     { "wedpost",	do_wedpost,	POS_DEAD,	ML,  1,  LOG_NORMAL, 1 },
     { "wizlock",	do_wizlock,	POS_DEAD,	L2,  1,  LOG_ALWAYS, 1 },
 

@@ -57,6 +57,7 @@ void	weather_update	args( ( void ) );
 void	char_update	args( ( void ) );
 void	obj_update	args( ( void ) );
 void	aggr_update	args( ( void ) );
+void	copyover_update	args( ( void ) );
 
 /* used for saving */
 
@@ -1216,10 +1217,31 @@ void update_handler( void )
 	weather_update	( );
 	char_update	( );
 	obj_update	( );
+	copyover_update	( );
 	randomize_entrances ( ROOM_VNUM_CHAIN );
     }
 
     aggr_update( );
     tail_chain( );
     return;
+}
+
+void copyover_update( void )
+{
+	char buf[MSL];
+	extern int copyover_timer;
+
+	if (copyover_timer > 1)
+	{
+		--copyover_timer;
+		sprintf(buf,"Copyover will occur in %d %s.\n\r", copyover_timer, copyover_timer > 1 ? "ticks" : "tick");
+		stac(buf);
+		return;
+	}
+	if (copyover_timer == 1)
+	{
+		--copyover_timer;
+		do_copyover(NULL,"");
+		return;
+	}
 }

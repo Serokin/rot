@@ -118,6 +118,8 @@ DECLARE_DO_FUN( do_combine	);
 DECLARE_DO_FUN( do_compact	);
 DECLARE_DO_FUN(	do_compare	);
 DECLARE_DO_FUN(	do_consider	);
+DECLARE_DO_FUN( do_copyove 	);
+DECLARE_DO_FUN( do_copyover_toggle 	);
 DECLARE_DO_FUN(	do_corner	);
 DECLARE_DO_FUN( do_count	);
 DECLARE_DO_FUN(	do_credits	);
