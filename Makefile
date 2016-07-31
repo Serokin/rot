@@ -1,6 +1,6 @@
 CC      = ccache gcc
 PROF    = -O -g -fno-builtin
-C_FLAGS =  $(PROF) -I$(INCLUDE)  -DROT
+C_FLAGS =  $(PROF) -I$(INCLUDE)  -DROT -Wno-unused-result
 L_FLAGS =  $(PROF) -lcrypt
 
 CORE	= rot
