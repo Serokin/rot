@@ -2649,7 +2649,6 @@ void do_save( CHAR_DATA *ch, char *argument )
 
     save_char_obj( ch );
     send_to_char("Saving. Remember that ROT has automatic saving.\n\r", ch);
-    WAIT_STATE(ch,4 * PULSE_VIOLENCE);
     return;
 }
 
