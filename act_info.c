@@ -2714,7 +2714,7 @@ void do_who( CHAR_DATA *ch, char *argument )
     }
 
     count += countimm;
-    hour = (int) (struct tm *)localtime(&current_time)->tm_hour;
+    hour = (int) ((struct tm *)localtime(&current_time))->tm_hour;
     if (hour < 12)
     {
 	if (is_pm)
@@ -2763,7 +2763,7 @@ void do_count ( CHAR_DATA *ch, char *argument )
     char buf[MAX_STRING_LENGTH];
 
     count = 0;
-    hour = (int) (struct tm *)localtime(&current_time)->tm_hour;
+    hour = (int) ((struct tm *)localtime(&current_time))->tm_hour;
     if (hour < 12)
     {
 	if (is_pm)
