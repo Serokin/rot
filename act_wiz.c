@@ -157,7 +157,7 @@ void do_copyover_toggle(CHAR_DATA *ch, char * argument)
     if (countdown > 0)
     {
         copyover_timer = countdown;
-        sprintf(buf,"Copyover countdown initiated by %s. Copyover will initiate in %d ticks.\n\r", ch->name, countdown ); 
+        sprintf(buf,"Copyover countdown initiated by %s. Copyover will initiate in %d %s.\n\r", ch->name, countdown, countdown > 1 ? "ticks" : "tick" ); 
         stac(buf);
         
         return;
