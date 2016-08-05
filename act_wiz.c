@@ -99,42 +99,46 @@ void do_copyove( CHAR_DATA *ch, char *argument )
 }
 
 /* Copyover_toggle -
- * Written by John Shields to count down globally before initial copyover.
+ * Written by John Shields<John@SerokinDesign.com> to count down globally before initial copyover.
  */
 void do_copyover_toggle(CHAR_DATA *ch, char * argument)
 {
     int countdown;
     char arg[MAX_INPUT_LENGTH];
-    char buf[MAX_STRING_LENGTH];
 
     one_argument(argument, arg);
     
     if (arg[0] == '\0')
     {
-        send_to_char("Copyover in how many ticks?\n\r", ch);
+        send_to_char("Syntax:\n\r", ch);
+        send_to_char("copyover now\n\r", ch);
+        send_to_char("copyover cancel\n\r", ch);
+        send_to_char("copyover <ticks>\n\r", ch);
         return;
     }
 
     if (!str_cmp("now", arg))
     {
         do_copyover(ch,"");
-        countdown = -1;
+        copyover_timer = -1;
         
         return;
     }
 
     if (!str_cmp("cancel", arg) || !str_cmp("stop", arg))
     {
-        countdown = -1;
-        sprintf(buf, "Copyover cancelled by %s.\n\r", ch->name);
-        stac(buf);
-        
+        copyover_timer = -1;
+        wprintf("Copyover cancelled by %s.\n\r", ch->name);
+
         return;
     }
     
     if (!is_number(arg))
     {
-        send_to_char("Copyover in how many ticks?\n\r", ch);
+        send_to_char("Syntax:\n\r", ch);
+        send_to_char("copyover now\n\r", ch);
+        send_to_char("copyover cancel\n\r", ch);
+        send_to_char("copyover <ticks>\n\r", ch);
         return;
     }
 
@@ -143,8 +147,7 @@ void do_copyover_toggle(CHAR_DATA *ch, char * argument)
     if (countdown == 0)
     {
         do_copyover(ch,"");
-        countdown = -1;
-        
+        copyover_timer = -1;
         return;
     }
     
@@ -157,14 +160,9 @@ void do_copyover_toggle(CHAR_DATA *ch, char * argument)
     if (countdown > 0)
     {
         copyover_timer = countdown;
-        sprintf(buf,"Copyover countdown initiated by %s. Copyover will initiate in %d %s.\n\r", ch->name, countdown, countdown > 1 ? "ticks" : "tick" ); 
-        stac(buf);
-        
+        wprintf("Copyover countdown initiated by %s. Copyover will initiate in %d %s.\n\r", ch->name, countdown, countdown > 1 ? "ticks" : "tick" );
         return;
     }
-
-    copyover_timer = countdown;
-
 return;
 }
 
